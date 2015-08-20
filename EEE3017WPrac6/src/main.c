@@ -8,7 +8,10 @@
 
 #define TRUE            1
 #define FALSE           0
+
 #define DEBOUNCE_MS     20
+#define ADC_GRAIN       806 // ADC grain in micro volts
+#define ADC_MULTIPLIER  (float)1000000 // Grain multiplier
 
 // == Type Definitions
 typedef enum {
@@ -17,6 +20,12 @@ typedef enum {
   PROG_STATE_WAIT_FOR_BUTTON,
   PROG_STATE_BUCKET_TIP
 } programState_t;
+
+typedef enum {
+  DISP_RAIN_BUCKET,
+  DISP_RAINFALL,
+  DISP_BAT
+} displayType_t;
 
 // == Global Variables
 programState_t programState; // To keep track of the program state throughout execution
@@ -31,6 +40,9 @@ static void lcd_put2String(uint8_t *string1, uint8_t *string2);
 void delay(unsigned int microseconds);
 
 static uint8_t getSW(uint8_t pb);
+static void check_battery(void);
+static uint16_t getADC(void);
+static void display(displayType_t displayType);
 
 // == Program Code
 int main(int argc, char* argv[]) {
@@ -41,13 +53,15 @@ int main(int argc, char* argv[]) {
   init_ports();
   init_EXTI();
   init_NVIC();
+  init_ADC();
 
   lcd_put2String("EEE3017W Prac 6", "Sean Wood");
   programState = PROG_STATE_WAIT_FOR_SW0;
 
   // Infinite loop
   while (1) {
-    __asm("nop");
+    check_battery();
+    //    __asm("nop");
   }
 }
 
@@ -62,8 +76,12 @@ static void init_ports(void) {
   // Enable the clock for ports used
   RCC->AHBENR |= RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOAEN;
 
-  // Initialise PB10 and PB11 for RG Led
-  GPIOB->MODER |= GPIO_MODER_MODER10_0 | GPIO_MODER_MODER11_0;
+  // Initialise PB0 - PB7, PB10 and PB11 for RG Led
+  GPIOB->MODER |= GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0 |
+                  GPIO_MODER_MODER2_0 | GPIO_MODER_MODER3_0 |
+                  GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0 |
+                  GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 |
+                  GPIO_MODER_MODER10_0 | GPIO_MODER_MODER11_0;
   GPIOB->ODR &= ~(GPIO_ODR_10 | GPIO_ODR_11); // Make sure they are not on
 
   // Initialise PA0, PA1, PA2 and PA3 for SW0, SW1, SW2 and SW3
@@ -71,15 +89,30 @@ static void init_ports(void) {
       | GPIO_MODER_MODER3);
   GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0
       | GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0; // Enable pullup resistors
+
+  // Initialise PA5 for ADC1
+  GPIOA->MODER |= GPIO_MODER_MODER5;
 }
 
 /*
- * @brief Initialise the ADC
+ * @brief Initialise the ADC to POT0
  * @params None
  * @retval None
  */
 static void init_ADC(void) {
+  // Enable the ADC clock in the RCC
+  RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
 
+  // Select ADC channel 5 for POT0
+  ADC1->CHSELR |= ADC_CHSELR_CHSEL5;
+
+  // Enable the ADC peripheral
+  ADC1->CR |= ADC_CR_ADEN;
+
+  // Wait for the ADC to become ready
+  while (!(ADC1->ISR & ADC_ISR_ADRDY)) {
+    __asm("nop");
+  }
 }
 
 /*
@@ -156,6 +189,19 @@ static uint8_t getSW(uint8_t pb) {
   }
 }
 
+static uint16_t getADC(void) {
+  // Start a conversion
+  ADC1->CR |= ADC_CR_ADSTART;
+
+  // Wait for the conversion to finish
+  while (!(ADC1->ISR & ADC_ISR_EOC)) {
+    __asm("nop");
+  }
+
+  // Return the result of the conversion
+  return (uint16_t)(ADC1->DR);
+}
+
 /*
  * @brief Interrupt Request Handler for EXTI Lines 2 and 3 (PB0 and PB1)
  * @params None
@@ -201,6 +247,19 @@ void EXTI2_3_IRQHandler(void) {
     }
   }
   EXTI->PR |= EXTI_PR_PR2 | EXTI_PR_PR3; // Clear the interrupt pending bit
+}
+
+/*
+ * @brief Check the "battery voltage" and
+ * @params None
+ * @retval None
+ */
+static void check_battery(void) {
+  uint16_t adcVal = getADC();
+  uint32_t uVoltage = adcVal * ADC_GRAIN;
+  float voltage = uVoltage/ADC_MULTIPLIER;
+
+  //
 }
 
 // ----------------------------------------------------------------------------
