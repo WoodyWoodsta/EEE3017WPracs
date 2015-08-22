@@ -10,7 +10,7 @@
 #define FALSE           0
 
 #define DEBOUNCE_MS     20
-#define ADC_GRAIN       806 // ADC grain in micro volts
+#define ADC_GRAIN       806 // ADC uV per bits
 #define ADC_MULTIPLIER  (float)1000000 // Grain multiplier
 
 // == Type Definitions
@@ -24,11 +24,14 @@ typedef enum {
 typedef enum {
   DISP_RAIN_BUCKET,
   DISP_RAINFALL,
-  DISP_BAT
+  DISP_BAT,
+  DISP_WELCOME,
+  DISP_MENU
 } displayType_t;
 
 // == Global Variables
 programState_t programState; // To keep track of the program state throughout execution
+uint32_t rainCounter; // Keep track of the rain
 
 // == Function Prototypes
 static void init_ports(void);
@@ -42,7 +45,7 @@ void delay(unsigned int microseconds);
 static uint8_t getSW(uint8_t pb);
 static void check_battery(void);
 static uint16_t getADC(void);
-static void display(displayType_t displayType);
+static void display(displayType_t displayType, void value);
 
 // == Program Code
 int main(int argc, char* argv[]) {
@@ -211,7 +214,7 @@ void EXTI0_1_IRQHandler(void) {
   if (getSW(0)) {
     switch (programState) {
     case PROG_STATE_WAIT_FOR_SW0:
-      lcd_put2String("Weather Station", "Press SW2 or SW3");
+      display(DISP_MENU);
       programState = PROG_STATE_WAIT_FOR_BUTTON;
       break;
     default:
@@ -220,8 +223,8 @@ void EXTI0_1_IRQHandler(void) {
   } else if (getSW(1)) {
     switch (programState) {
     case PROG_STATE_WAIT_FOR_BUTTON:
-      lcd_put2String("Rain bucket tip", "");
-      // TODO Increment the rain counter
+      rainCounter++; // Increment the rain counter
+      display(DISP_RAIN_BUCKET); // Notify the user
       break;
     default:
       break;
@@ -259,7 +262,34 @@ static void check_battery(void) {
   uint32_t uVoltage = adcVal * ADC_GRAIN;
   float voltage = uVoltage/ADC_MULTIPLIER;
 
-  //
+  display(DISP_BAT);
+}
+
+/*
+ * @brief Display the specified data on the screen
+ * @params displayType: What to display on the screen
+ *         value: Data to display for the given type
+ * @retval None
+ */
+void display(displayType_t displayType, void value) {
+  switch (displayType) {
+  case DISP_BAT:
+    break;
+  case DISP_RAINFALL:
+    lcd_putString("Rainfall:");
+    lcd_command(LINE_TWO);
+    break;
+  case DISP_RAIN_BUCKET:
+    lcd_put2String("Rain bucket tip", "");
+    break;
+  case DISP_MENU:
+    lcd_put2String("Weather Station", "Press SW2 or SW3");
+    break;
+  case DISP_WELCOME:
+    break;
+  default:
+    break;
+  }
 }
 
 // ----------------------------------------------------------------------------
