@@ -14,6 +14,7 @@
 #define DEBOUNCE_MS     20
 #define ADC_GRAIN       806 // ADC uV per bits
 #define ADC_MULTIPLIER  (float)1000000 // Grain multiplier
+#define BAT_THRESHOLD   (float)1.00
 
 // == Type Definitions
 typedef enum {
@@ -34,6 +35,7 @@ typedef enum {
 // == Global Variables
 programState_t programState; // To keep track of the program state throughout execution
 uint32_t rainCounter; // Keep track of the rain [0.2mm]
+float batVoltage; // Battery voltage from 1Hz samples
 
 // == Function Prototypes
 static void init_ports(void);
@@ -47,7 +49,7 @@ void delay(unsigned int microseconds);
 static uint8_t getSW(uint8_t pb);
 static void check_battery(void);
 static uint16_t getADC(void);
-static void display(displayType_t displayType, ...);
+static void display(displayType_t displayType, float data);
 static uint8_t *ConverttoBCD(float number, uint8_t dec, uint8_t frac);
 
 // == Program Code
@@ -66,7 +68,7 @@ int main(int argc, char* argv[]) {
 
   // Infinite loop
   while (1) {
-    __asm("nop");
+    check_battery();
   }
 }
 
@@ -216,7 +218,7 @@ void EXTI0_1_IRQHandler(void) {
   if (getSW(0)) {
     switch (programState) {
     case PROG_STATE_WAIT_FOR_SW0:
-      display(DISP_MENU);
+      display(DISP_MENU, 0);
       programState = PROG_STATE_WAIT_FOR_BUTTON;
       break;
     default:
@@ -226,7 +228,7 @@ void EXTI0_1_IRQHandler(void) {
     switch (programState) {
     case PROG_STATE_WAIT_FOR_BUTTON:
       rainCounter++; // Increment the rain counter
-      display(DISP_RAIN_BUCKET); // Notify the user
+      display(DISP_RAIN_BUCKET, 0); // Notify the user
       break;
     default:
       break;
@@ -253,7 +255,7 @@ void EXTI2_3_IRQHandler(void) {
   } else if (getSW(3)) {
     switch (programState) {
     case PROG_STATE_WAIT_FOR_BUTTON:
-
+      display(DISP_BAT, batVoltage);
       break;
     default:
       break;
@@ -270,9 +272,16 @@ void EXTI2_3_IRQHandler(void) {
 static void check_battery(void) {
   uint16_t adcVal = getADC();
   uint32_t uVoltage = adcVal * ADC_GRAIN;
-  float voltage = uVoltage/ADC_MULTIPLIER;
+  batVoltage = 5*(uVoltage/ADC_MULTIPLIER);
 
-  display(DISP_BAT, voltage);
+  if (batVoltage <= BAT_THRESHOLD) {
+    GPIOB->ODR &= ~(1 << 11);
+    GPIOB->ODR |= (1 << 10);
+  } else {
+    GPIOB->ODR &= ~(1 << 10);
+    GPIOB->ODR |= (1 << 11);
+  }
+
 }
 
 /*
@@ -281,20 +290,30 @@ static void check_battery(void) {
  *         ...: Data to display for the given type
  * @retval None
  */
-void display(displayType_t displayType, ...) {
+void display(displayType_t displayType, float data) {
   // Declare and initialise an argument list to give us some "overloading"
-  va_list argPtr;
-  va_start(argPtr, displayType);
+  switch (displayType) {
+  case DISP_BAT: {
+    lcd_command(CLEAR);
+    lcd_command(CURSOR_HOME);
+    lcd_putstring("Battery:");
+    lcd_command(LINE_TWO);
 
-  displayType_t type = va_arg(argPtr, int);
-  switch (type) {
-  case DISP_BAT:
+    uint8_t *string = ConverttoBCD(data, 2, 3);
+    lcd_putstring(string);
+    lcd_putstring(" V");
+
+    free(string);
+
     break;
+  }
   case DISP_RAINFALL: {
+    lcd_command(CLEAR);
+    lcd_command(CURSOR_HOME);
     lcd_putstring("Rainfall:");
     lcd_command(LINE_TWO);
 
-    float rain = 0.2*va_arg(argPtr, double);
+    float rain = 0.2*data;
     uint8_t *string = ConverttoBCD(rain, 4, 1);
     lcd_putstring(string);
     lcd_putstring(" mm");
@@ -313,8 +332,6 @@ void display(displayType_t displayType, ...) {
   default:
     break;
   }
-
-  va_end(argPtr); // End the list of arguments
 }
 
 /*
@@ -348,7 +365,7 @@ static uint8_t *ConverttoBCD(float number, uint8_t dec, uint8_t frac) {
   }
 
   string[dec] = '.';
-  string[strLength - 1] = '/0';
+  string[strLength - 1] = '\0';
   return string;
 }
 
