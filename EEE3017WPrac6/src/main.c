@@ -2,7 +2,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stm32f0xx.h>
+#include "math.h"
 #include "diag/Trace.h"
 #include "lcd_stm32f0.h"
 
@@ -12,6 +14,7 @@
 #define DEBOUNCE_MS     20
 #define ADC_GRAIN       806 // ADC uV per bits
 #define ADC_MULTIPLIER  (float)1000000 // Grain multiplier
+#define BAT_THRESHOLD   (float)1.00
 
 // == Type Definitions
 typedef enum {
@@ -31,7 +34,8 @@ typedef enum {
 
 // == Global Variables
 programState_t programState; // To keep track of the program state throughout execution
-uint32_t rainCounter; // Keep track of the rain
+uint32_t rainCounter; // Keep track of the rain [0.2mm]
+float batVoltage; // Battery voltage from 1Hz samples
 
 // == Function Prototypes
 static void init_ports(void);
@@ -45,7 +49,8 @@ void delay(unsigned int microseconds);
 static uint8_t getSW(uint8_t pb);
 static void check_battery(void);
 static uint16_t getADC(void);
-static void display(displayType_t displayType, void value);
+static void display(displayType_t displayType, float data);
+static uint8_t *ConverttoBCD(float number, uint8_t dec, uint8_t frac);
 
 // == Program Code
 int main(int argc, char* argv[]) {
@@ -64,7 +69,6 @@ int main(int argc, char* argv[]) {
   // Infinite loop
   while (1) {
     check_battery();
-    //    __asm("nop");
   }
 }
 
@@ -214,7 +218,7 @@ void EXTI0_1_IRQHandler(void) {
   if (getSW(0)) {
     switch (programState) {
     case PROG_STATE_WAIT_FOR_SW0:
-      display(DISP_MENU);
+      display(DISP_MENU, 0);
       programState = PROG_STATE_WAIT_FOR_BUTTON;
       break;
     default:
@@ -224,7 +228,7 @@ void EXTI0_1_IRQHandler(void) {
     switch (programState) {
     case PROG_STATE_WAIT_FOR_BUTTON:
       rainCounter++; // Increment the rain counter
-      display(DISP_RAIN_BUCKET); // Notify the user
+      display(DISP_RAIN_BUCKET, 0); // Notify the user
       break;
     default:
       break;
@@ -243,7 +247,15 @@ void EXTI2_3_IRQHandler(void) {
   if (getSW(2)) {
     switch (programState) {
     case PROG_STATE_WAIT_FOR_BUTTON:
-      lcd_put2String("Rainfall:", "0.0000000mm");
+      display(DISP_RAINFALL, rainCounter);
+      break;
+    default:
+      break;
+    }
+  } else if (getSW(3)) {
+    switch (programState) {
+    case PROG_STATE_WAIT_FOR_BUTTON:
+      display(DISP_BAT, batVoltage);
       break;
     default:
       break;
@@ -253,32 +265,62 @@ void EXTI2_3_IRQHandler(void) {
 }
 
 /*
- * @brief Check the "battery voltage" and
+ * @brief Check the "battery voltage" and display it
  * @params None
  * @retval None
  */
 static void check_battery(void) {
   uint16_t adcVal = getADC();
   uint32_t uVoltage = adcVal * ADC_GRAIN;
-  float voltage = uVoltage/ADC_MULTIPLIER;
+  batVoltage = 5*(uVoltage/ADC_MULTIPLIER);
 
-  display(DISP_BAT);
+  if (batVoltage <= BAT_THRESHOLD) {
+    GPIOB->ODR &= ~(1 << 11);
+    GPIOB->ODR |= (1 << 10);
+  } else {
+    GPIOB->ODR &= ~(1 << 10);
+    GPIOB->ODR |= (1 << 11);
+  }
+
 }
 
 /*
  * @brief Display the specified data on the screen
  * @params displayType: What to display on the screen
- *         value: Data to display for the given type
+ *         ...: Data to display for the given type
  * @retval None
  */
-void display(displayType_t displayType, void value) {
+void display(displayType_t displayType, float data) {
+  // Declare and initialise an argument list to give us some "overloading"
   switch (displayType) {
-  case DISP_BAT:
-    break;
-  case DISP_RAINFALL:
-    lcd_putString("Rainfall:");
+  case DISP_BAT: {
+    lcd_command(CLEAR);
+    lcd_command(CURSOR_HOME);
+    lcd_putstring("Battery:");
     lcd_command(LINE_TWO);
+
+    uint8_t *string = ConverttoBCD(data, 2, 3);
+    lcd_putstring(string);
+    lcd_putstring(" V");
+
+    free(string);
+
     break;
+  }
+  case DISP_RAINFALL: {
+    lcd_command(CLEAR);
+    lcd_command(CURSOR_HOME);
+    lcd_putstring("Rainfall:");
+    lcd_command(LINE_TWO);
+
+    float rain = 0.2*data;
+    uint8_t *string = ConverttoBCD(rain, 4, 1);
+    lcd_putstring(string);
+    lcd_putstring(" mm");
+
+    free(string);
+    break;
+  }
   case DISP_RAIN_BUCKET:
     lcd_put2String("Rain bucket tip", "");
     break;
@@ -291,5 +333,41 @@ void display(displayType_t displayType, void value) {
     break;
   }
 }
+
+/*
+ * @brief Convert the float given to a string
+ * @params rain: Rain in mm
+ *         dec: Number of digits to the left of the decimal point
+ *         frac: Number of decimal places (precision)
+ * @retval Pointer to the converted string
+ * @note String must be freed after use
+ */
+static uint8_t *ConverttoBCD(float number, uint8_t dec, uint8_t frac) {
+  uint8_t *string;
+  uint32_t rainDec = number*pow(10,frac);
+  uint32_t strLength = (dec + frac + 2)*sizeof(uint8_t);
+  string = malloc(strLength); // Allocate space for the resulting string
+  memset(string, '0', strLength);
+
+  int pos = 0;
+  int dig = 0;
+  for (pos = 0; pos < strLength; pos++) {
+    if (pos == dec) {
+      pos++;
+    }
+
+    uint32_t multiplier = pow(10, strLength-dig-3);
+    uint32_t digit = (uint32_t)(rainDec/multiplier);
+    string[pos] = (uint8_t)(digit + 48);
+    rainDec -= digit*multiplier;
+
+    dig++;
+  }
+
+  string[dec] = '.';
+  string[strLength - 1] = '\0';
+  return string;
+}
+
 
 // ----------------------------------------------------------------------------
