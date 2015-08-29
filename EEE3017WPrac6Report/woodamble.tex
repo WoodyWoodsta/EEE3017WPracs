@@ -35,10 +35,11 @@
 \usepackage{pygmentex}                                       % Code snippet color support
 \usepackage{listings}                                              % Code snippet support
 \usepackage{minted}                                                       % Code snippets
+\usepackage{mdframed}                                                  % Multipage minted
 
 % == Colour Definitions
 \definecolor{dkgreen}{rgb}{0,0.6,0}
-\definecolor{gray}{rgb}{0.93,0.93,0.93}
+\definecolor{gray}{rgb}{0.95,0.95,0.95}
 \definecolor{mauve}{rgb}{0.58,0,0.82}
 
 % == Code Snippet Config
@@ -46,8 +47,12 @@
 \setmonofont{Consolas}
 \usemintedstyle{friendly}
 \setminted{ bgcolor=gray,
-            fontsize=\small}
-\lstset{frame=tb,
+            fontsize=\small,
+            linenos=true,
+            frame=lines,
+            framesep=3mm,
+            breaklines}
+\lstset{frame=lines,
   aboveskip=3mm,
   belowskip=3mm,
   showstringspaces=false,
