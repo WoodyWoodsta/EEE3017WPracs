@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
   init_NVIC();
   init_ADC();
 
-  lcd_put2String("EEE3017W Prac 6", "Sean Wood");
+  lcd_put2String("EEE3017W Prac 6", "Sean & Sean");
   programState = PROG_STATE_WAIT_FOR_SW0;
 
   // Infinite loop
