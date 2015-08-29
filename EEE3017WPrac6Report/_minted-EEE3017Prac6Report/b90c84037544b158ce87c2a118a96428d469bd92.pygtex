@@ -1,0 +1,14 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{   * @brief Initialise the EXTI lines for pushbutton interrupts}
+\PYGfriendly{c+cm}{   * @params None}
+\PYGfriendly{c+cm}{   * @retval None}
+\PYGfriendly{c+cm}{   */}
+  \PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}EXTI}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{n}{RCC}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{APB2ENR} \PYGfriendly{o}{|=} \PYGfriendly{n}{RCC\PYGfriendlyZus{}APB2ENR\PYGfriendlyZus{}SYSCFGCOMPEN}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Enable the SYSCFG and COMP RCC clock}
+    \PYGfriendly{n}{SYSCFG}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{EXTICR}\PYGfriendly{p}{[}\PYGfriendly{l+m+mi}{1}\PYGfriendly{p}{]} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{l+m+mh}{0xFFFF}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Map PA0 and PA1 to external interrupt lines}
+
+    \PYGfriendly{n}{EXTI}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{FTSR} \PYGfriendly{o}{|=} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}FTSR\PYGfriendlyZus{}TR0} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}FTSR\PYGfriendlyZus{}TR1} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}FTSR\PYGfriendlyZus{}TR2} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}FTSR\PYGfriendlyZus{}TR3}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Configure trigger to falling edge}
+    \PYGfriendly{n}{EXTI}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{IMR} \PYGfriendly{o}{|=} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}IMR\PYGfriendlyZus{}MR0} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}IMR\PYGfriendlyZus{}MR1} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}IMR\PYGfriendlyZus{}MR2} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}IMR\PYGfriendlyZus{}MR3}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Umask the interrupts}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}

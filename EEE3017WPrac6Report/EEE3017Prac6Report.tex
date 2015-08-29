@@ -1,0 +1,544 @@
+\input{woodamble}                                                       % Custom preamble
+%----------------------------------------------------------------------------------------
+% NAME AND CLASS SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\reportTitle}{Practical 6 Report} % Assignment title
+\newcommand{\reportDueDate}{Wednesday,\ September\ 03,\ 2014}                    % Due date
+\newcommand{\reportClass}{EEE3017W - Digitals}                               % Course/class
+\newcommand{\reportClassTime}{10:30am}                                 % Class/lecture time
+\newcommand{\reportClassInstructor}{Jones}                               % Teacher/lecturer
+\newcommand{\reportAuthorName}{Sean Wood - WDXSEA003 $|$ Sean Woodgate - WDGSEA001}                           % Your name
+\newcommand{\reportDepartment}{Department of Electrical Engineering}           % Department
+
+%----------------------------------------------------------------------------------------
+% TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title{
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=0.4\columnwidth]{uct-logo}
+  \end{center}
+\end{figure}
+\textmd{\Huge UNIVERSITY OF CAPETOWN \\ \LARGE \reportDepartment} \\
+\vspace{2in}
+\textmd{\textbf{\LARGE \reportClass\\ \Huge \reportTitle \\ \vspace{1.5in} \Large \reportAuthorName}}\\
+%\normalsize\vspace{0.1in}\small{Due\ on\ \hmwkDueDate}\\
+%\vspace{0.1in}\large{\textit{\hmwkClassInstructor\ \hmwkClassTime}}
+}
+
+\date{}
+
+%========================================================================================
+%========================================================================================
+
+\begin{document}
+  \maketitle
+  \thispagestyle{empty}
+
+% \frontmatter
+%----------------------------------------------------------------------------------------
+% ABTRACT
+%----------------------------------------------------------------------------------------
+\setcounter{tocdepth}{3}                                                      % ToC Depth
+
+% \begin{abstract}
+% This report covers the design and testing of a state feedback controller implemented to control a computer model of a helicopter.  The controller interfaces with the computer by means of a ADC and DAC and is comprised of operational amplifiers. % TODO put more here!s
+% \end{abstract}
+% \newpage
+
+%----------------------------------------------------------------------------------------
+% TABLE OF CONTENTS
+%----------------------------------------------------------------------------------------
+
+% \clearpage
+%
+% \tableofcontents
+%
+% \clearpage
+%
+% \listoffigures
+% \listoftables
+%
+% \clearpage
+%
+%----------------------------------------------------------------------------------------
+% NOMENCLATURE
+%----------------------------------------------------------------------------------------
+
+% \section{Nomenclature}
+% \label{sec:Nomenclature}
+%
+% \textbf{Constants}
+%
+% \(V_{LINE}\) - Nominal Line Voltage\\
+% \(A_v\) - Operational Amplifier Gain\\
+% \(db_{SPL}\) - Sound Pressure Level\\
+% \(\theta_S\) - Phase Shift
+
+%----------------------------------------------------------------------------------------
+% INTRODUCTION
+%----------------------------------------------------------------------------------------
+\section{Introduction}
+\label{sec:Introduction}
+This report covers the system design and implementation of a rain-gauge on the STM32F051C6 Development Board as part of the EEE3017W Digitals Practical 6.
+
+\section*{System Design}
+\label{sec:System Design}
+\subsection*{(a)}
+\label{sub:(a)}
+Below is the initialization function for the ports used in the project: \\
+\begin{mdframed}[linecolor=black, topline=false, bottomline=false,
+  leftline=false, rightline=false, userdefinedwidth=\textwidth]
+  \begin{minted}{c}
+    /*
+    * @brief Initialise the GPIO ports for pushbuttons, LEDs and the ADC
+    * @params None
+    * @retval None
+    */
+    static void init_ports(void) {
+      // Enable the clock for ports used
+      RCC->AHBENR |= RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOAEN;
+
+      // Initialise PB0 - PB7, PB10 and PB11 for RG Led
+      GPIOB->MODER |= GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0 |
+                      GPIO_MODER_MODER2_0 | GPIO_MODER_MODER3_0 |
+                      GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0 |
+                      GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 |
+                      GPIO_MODER_MODER10_0 | GPIO_MODER_MODER11_0;
+      GPIOB->ODR &= ~(GPIO_ODR_10 | GPIO_ODR_11); // Make sure they are not on
+
+      // Initialise PA0, PA1, PA2 and PA3 for SW0, SW1, SW2 and SW3
+      GPIOA->MODER &= ~(GPIO_MODER_MODER0 | GPIO_MODER_MODER1 | GPIO_MODER_MODER2
+          | GPIO_MODER_MODER3);
+      GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0
+          | GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0; // Enable pullup resistors
+
+      // Initialise PA5 for ADC1
+      GPIOA->MODER |= GPIO_MODER_MODER5;
+    }
+  \end{minted}
+\end{mdframed}
+\vspace{0.5cm}
+
+Below is the initialization function for the Analog to Digital Converter (ADC):\\
+
+\begin{minted}{c}
+  /*
+   * @brief Initialise the ADC to POT0
+   * @params None
+   * @retval None
+   */
+  static void init_ADC(void) {
+    // Enable the ADC clock in the RCC
+    RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
+
+    // Select ADC channel 5 for POT0
+    ADC1->CHSELR |= ADC_CHSELR_CHSEL5;
+
+    // Enable the ADC peripheral
+    ADC1->CR |= ADC_CR_ADEN;
+
+    // Wait for the ADC to become ready
+    while (!(ADC1->ISR & ADC_ISR_ADRDY)) {
+      __asm("nop");
+    }
+  }
+\end{minted}
+\vspace{0.5cm}
+
+Below is the initialization function for the Nested Vector Interrupt Controller (NVIC):\\
+
+\begin{minted}{c}
+  /*
+   * @brief Initialise the NVIC for pushbutton interrupts
+   * @params None
+   * @retval None
+   */
+  static void init_NVIC(void) {
+    NVIC_EnableIRQ(EXTI0_1_IRQn); // For lines 0 and 1
+    NVIC_EnableIRQ(EXTI2_3_IRQn); // For lines 2 and 3
+    NVIC_EnableIRQ(TIM14_IRQn); // For TIM14
+  }
+\end{minted}
+\vspace{0.5cm}
+
+Below is the initialization function for the External Interrupt controller (EXTI):\\
+
+\begin{minted}{c}
+  /*
+   * @brief Initialise the EXTI lines for pushbutton interrupts
+   * @params None
+   * @retval None
+   */
+  static void init_EXTI(void) {
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN; // Enable the SYSCFG and COMP RCC clock
+    SYSCFG->EXTICR[1] &= ~(0xFFFF); // Map PA0 and PA1 to external interrupt lines
+
+    EXTI->FTSR |= EXTI_FTSR_TR0 | EXTI_FTSR_TR1 | EXTI_FTSR_TR2 | EXTI_FTSR_TR3; // Configure trigger to falling edge
+    EXTI->IMR |= EXTI_IMR_MR0 | EXTI_IMR_MR1 | EXTI_IMR_MR2 | EXTI_IMR_MR3; // Umask the interrupts
+  }
+\end{minted}
+\vspace{0.5cm}
+
+\subsection*{(b)}
+\label{sub:(b)}
+The rain-gauge requires a low voltage detection system to detect when the battery falls below a certain threshold. Given that the maximum battery voltage is 24V and the threshold is set to 14V, the digital ADC value at the threshold will be the following:
+
+\begin{equation*}
+  \begin{split}
+    \text{ADC Analog Value} \biggr\rvert_{\text{at threshold}} &= \frac{V_{ADC_{max}}}{V_{bat_{max}}} \times V_{thres}\\
+    &= \frac{3}{24} (14)\\
+    &= 1.75 \text{V}
+  \end{split}
+\end{equation*}
+
+\begin{equation*}
+  \begin{split}
+    \text{ADC}\biggr\rvert_{\text{1.75 V}} &= \frac{\text{12-bit maximim}}{V_{ADC_{max}}} \times \text{ADC Analog Value}\\
+    &= \frac{4095}{3} (1.75)\\
+    &= 2399 \eoc
+  \end{split}
+\end{equation*}
+
+\subsection*{(c)}
+\label{sub:(c)}
+
+Below are the functions to monitor the battery voltage:\\
+
+\begin{minted}{c}
+    /*
+   * @brief Kick off and grab an ADC conversion
+   * @params None
+   * @retval None
+   */
+  static uint16_t getADC(void) {
+    // Start a conversion
+    ADC1->CR |= ADC_CR_ADSTART;
+
+    // Wait for the conversion to finish
+    while (!(ADC1->ISR & ADC_ISR_EOC)) {
+      __asm("nop");
+    }
+
+    // Return the result of the conversion
+    return (uint16_t)(ADC1->DR);
+  }
+
+  /*
+   * @brief Check the "battery voltage" and display it
+   * @params None
+   * @retval None
+   */
+  static void check_battery(void) {
+    // Grab the ADC value, convert to uV and then to battery voltage
+    uint16_t adcVal = getADC();
+    uint32_t uVoltage = adcVal * ADC_GRAIN;
+    batVoltage = 7.21*(uVoltage/ADC_MULTIPLIER);
+
+    // Check for voltage threshold and change the LED accordingly
+    if (batVoltage <= BAT_THRESHOLD) {
+      GPIOB->ODR &= ~(1 << 11);
+      GPIOB->ODR |= (1 << 10);
+    } else {
+      GPIOB->ODR &= ~(1 << 10);
+      GPIOB->ODR |= (1 << 11);
+    }
+  }
+\end{minted}
+\vspace{0.5cm}
+
+\subsection*{(d)}
+\label{sub:(d)}
+
+Below is the EXTI handler for lines 0 and 1:\\
+
+\begin{minted}{c}
+  /*
+   * @brief Interrupt Request Handler for EXTI Lines 2 and 3 (PB0 and PB1)
+   * @params None
+   * @retval None
+   */
+  void EXTI0_1_IRQHandler(void) {
+    // Check which button generated the interrupt
+    if (getSW(0)) {
+      // Check the state of the program
+      switch (programState) {
+      case PROG_STATE_WAIT_FOR_SW0:
+        // If we were waiting for SW0, display the menu
+        display(DISP_MENU, 0);
+
+        // Change program state
+        programState = PROG_STATE_WAIT_FOR_BUTTON;
+        break;
+      default:
+        break;
+      }
+    } else if (getSW(1)) {
+      // Check the state of the program
+      switch (programState) {
+      case PROG_STATE_WAIT_FOR_BUTTON:
+        // If we were waiting for another button:
+        rainCounter++; // Increment the rain counter
+        display(DISP_RAIN_BUCKET, 0); // Notify the user
+        break;
+      default:
+        break;
+      }
+    }
+
+    // Clear the interrupt pending bit
+    EXTI->PR |= EXTI_PR_PR0 | EXTI_PR_PR1;
+  }
+\end{minted}
+\vspace{0.5cm}
+
+\subsection*{(e)}
+\label{sub:(e)}
+
+Below is the function to convert floats to BCD:\\
+
+\begin{minted}{c}
+  /*
+   * @brief Convert the float given to a string
+   * @params rain: Rain in mm
+   *         dec: Number of digits to the left of the decimal point
+   *         frac: Number of decimal places (precision)
+   * @retval Pointer to the converted string
+   * @note String must be freed after use
+   */
+  static uint8_t *ConverttoBCD(float number, uint8_t dec, uint8_t frac) {
+    uint8_t *string; // Pointer to the resulting string
+    uint32_t rainDec = number*pow(10,frac); // Shift all digits to be used onto the left side of the decimal point
+    uint32_t strLength = (dec + frac + 2)*sizeof(uint8_t); // Calculate the length of the require string given the accuracy parameters
+    string = malloc(strLength); // Allocate space for the resulting string
+    memset(string, '0', strLength); // Set all characters in the string to zeroes
+
+    // Loop through the digits in the newly formed integer number and place the digits in the string
+    int pos = 0;
+    int dig = 0;
+    for (pos = 0; pos < strLength; pos++) {
+      // If we reach the end of the decimal part of the number, skip a position for placement of the decimal point
+      if (pos == dec) {
+        pos++;
+      }
+
+      // Extract the digit from the newly formed integer number based on the position
+      uint32_t multiplier = pow(10, strLength-dig-3);
+      uint32_t digit = (uint32_t)(rainDec/multiplier);
+      string[pos] = (uint8_t)(digit + 48); // Convert the number to ASCII by adding 48 to it
+      rainDec -= digit*multiplier; // Subtract the extracted digit from the integer number
+
+      // Increment the digit number
+      dig++;
+    }
+
+    // Place the decimal point and the null terminator in the correct positions
+    string[dec] = '.';
+    string[strLength - 1] = '\0';
+
+    // Return the pointer to the converted string
+    return string;
+  }
+\end{minted}
+\vspace{0.5cm}
+
+\subsection*{(e)}
+\label{sub:(e)}
+
+Below is the function to display values on the LCD:\\
+
+\begin{minted}{c}
+  /*
+   * @brief Display the specified data on the screen
+   * @params displayType: What to display on the screen
+   *         ...: Data to display for the given type
+   * @retval None
+   */
+  void display(displayType_t displayType, float data) {
+    // Switch on what needs to be displayed
+    switch (displayType) {
+    case DISP_BAT: {
+      // Display the battery voltage on the LCD
+      lcd_command(CLEAR);
+      lcd_command(CURSOR_HOME);
+      lcd_putstring("Battery:");
+      lcd_command(LINE_TWO);
+
+      // Generate the string with the batter voltage
+      uint8_t *string = ConverttoBCD(data, 2, 3);
+      lcd_putstring(string);
+      lcd_putstring(" V");
+
+      // De-allocate the memory used for the battery string
+      free(string);
+      break;
+    }
+    case DISP_RAINFALL: {
+      // Display the rainfall amount on the LCD
+      lcd_command(CLEAR);
+      lcd_command(CURSOR_HOME);
+      lcd_putstring("Rainfall:");
+      lcd_command(LINE_TWO);
+
+      // Fetch and convert the rainfall to a string
+      float rain = 0.2*data;
+      uint8_t *string = ConverttoBCD(rain, 4, 1);
+      lcd_putstring(string);
+      lcd_putstring(" mm");
+
+      // De-allocate the memory used for the rainfall string
+      free(string);
+      break;
+    }
+    case DISP_RAIN_BUCKET:
+      // Display the bucket tip notification LCD
+      lcd_put2String("Rain bucket tip", "");
+      break;
+    case DISP_MENU:
+      // Display the menu on the LCD
+      lcd_put2String("Weather Station", "Press SW2 or SW3");
+      break;
+    case DISP_WELCOME:
+      // Display the welcome on the LCD
+      lcd_put2String("EEE3017W Prac 6", "Sean & Sean");
+      break;
+    default:
+      break;
+    }
+  }
+\end{minted}
+\vspace{0.5cm}
+
+\subsection*{(f)}
+\label{sub:(f)}
+
+Below is the completed code as tested:\\
+
+\inputminted[firstline=1, lastline=50]{c}{main.c}
+\newpage
+\inputminted[firstline=51, lastline=100]{c}{main.c}
+\newpage
+\inputminted[firstline=101, lastline=150]{c}{main.c}
+\newpage
+\inputminted[firstline=151, lastline=200]{c}{main.c}
+\newpage
+\inputminted[firstline=201, lastline=250]{c}{main.c}
+\newpage
+\inputminted[firstline=251, lastline=300]{c}{main.c}
+\newpage
+\inputminted[firstline=301, lastline=350]{c}{main.c}
+\newpage
+\inputminted[firstline=351, lastline=400]{c}{main.c}
+\newpage
+\inputminted[firstline=401, lastline=450]{c}{main.c}
+
+\vspace{0.5cm}
+
+
+\end{document}
+
+%----------------------------------------------------------------------------------------
+% INSTRUCTIONS AND TEMPLATE COMPONENTS
+%----------------------------------------------------------------------------------------
+
+% Set space - \vspace{length}
+% Horizontal line - \hrule
+% Pagebreak - \clearpage or \newpage - they seem to do the same thing
+
+% Normal equation:
+% \begin{equation}
+%   p = \frac{p_g - k}{m}
+% \end{equation}
+
+% Aligned equation:
+% \begin{equation}
+%   \begin{split}
+%     \rho_5  & = -\frac{\left(1575-1900\right)}{g\left(105\e{-3}-70\e{-3}\right)}\\
+%             & = 946.56 \text{ kg/m\(^{-3}\)}\\
+%     \rho_6  & = -\frac{\left(1900-2150\right)}{g\left(70\e{-3}-42\e{-3}\right)}\\
+%             & = 910.15 \text{ kg/m\(^{-3}\)}\\
+%   \end{split}
+% \end{equation}
+
+% Table: Can get from the table site!
+% \begin{table}[h]
+% \centering
+% \begin{tabular}{cccc}
+% \multicolumn{4}{c}{\cellcolor[HTML]{EFEFEF}DATA MEASUREMENTS} \\ \hline
+% \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}Known Weight \\ Pressure (Psi)\end{tabular}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}Known Weight\\ Pressure (Bar)\end{tabular}} & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}Gauge Pressure\\ (Psi)\end{tabular}} & \begin{tabular}[c]{@{}c@{}}Gauge Pressure\\ (Bar)\end{tabular} \\ \hline
+% \multicolumn{1}{c|}{22} & \multicolumn{1}{c|}{1.52} & \multicolumn{1}{c|}{9.43} & 0.65 \\
+% \multicolumn{1}{c|}{\textbf{27}} & \multicolumn{1}{c|}{\textbf{1.86}} & \multicolumn{1}{c|}{\textbf{13.78}} & \textbf{0.95} \\
+% \multicolumn{1}{c|}{32} & \multicolumn{1}{c|}{2.21} & \multicolumn{1}{c|}{17.40} & 1.20 \\
+% \multicolumn{1}{c|}{37} & \multicolumn{1}{c|}{2.55} & \multicolumn{1}{c|}{21.76} & 1.50 \\
+% \multicolumn{1}{c|}{42} & \multicolumn{1}{c|}{2.90} & \multicolumn{1}{c|}{26.11} & 1.80 \\
+% \multicolumn{1}{c|}{47} & \multicolumn{1}{c|}{3.24} & \multicolumn{1}{c|}{29.01} & 2.00 \\
+% \multicolumn{1}{c|}{\textbf{52}} & \multicolumn{1}{c|}{\textbf{3.59}} & \multicolumn{1}{c|}{\textbf{33.36}} & \textbf{2.30} \\
+% \multicolumn{1}{c|}{57} & \multicolumn{1}{c|}{3.93} & \multicolumn{1}{c|}{37.71} & 2.60 \\ \hline
+% \end{tabular}
+% \caption{Dead weight tester and gauge measurements}
+% \label{gaugeMeasurements}
+% \end{table}
+
+% Picture:
+% \begin{figure}[H]
+%   \begin{center}
+%     \includegraphics[width=0.4\columnwidth]{MEC2022SLab1Exp1}
+%     \caption{Apparatus}
+%     \label{liquidDiagram}
+%   \end{center}
+% \end{figure}
+
+% Graph:
+% \begin{figure}[H]
+%   \centering
+%   \begin{tikzpicture}
+%     \begin{axis}[
+%       xlabel=Known Weight (Psi),
+%       ylabel=Reading (Psi),
+%       grid=major]
+%     \addplot[color=red, smooth] coordinates {
+%       (22,9.43)
+%       (27,13.78)
+%     };
+%     \addlegendentry{Gauge}
+
+%     \addplot[color=blue, dashed, smooth] coordinates {
+%       (22,22)
+%       (27,27)
+%     };
+%     \addlegendentry{Known weight}
+
+%     \end{axis}
+%   \end{tikzpicture}
+%   \caption{Dead weight tester and gauge measurements}
+%   \label{gaugePlot}
+% \end{figure}
+
+% Indented Text: (bit of a hacky way to do it)
+% \begin{quote}
+% where \(p_g\) is the gauge reading, \(m\) is the error coefficient, \(p\) is the known (``correct'') pressure and \(k\) is the error constant
+% \end{quote}
+
+% Code Snippet:
+% \begin{minted}{c}
+%   void main(void) {
+%     init_leds();
+%
+%     while (TRUE) {
+%       __asm("nop");
+%     }
+%   }
+% \end{minted}
+
+% Bibliography:
+% \begin{thebibliography}{99}
+%   \bibitem{itemname}
+%   Author,
+%   Date.
+%   \emph{Title}.
+%   Edition.
+%   Press.
+%   \url{http://web.iitd.ac.in/~shouri/eel201/tuts/diode_switch.pdf}
+% \end{thebibliography}

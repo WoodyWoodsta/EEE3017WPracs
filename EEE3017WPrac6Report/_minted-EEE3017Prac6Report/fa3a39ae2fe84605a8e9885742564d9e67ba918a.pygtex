@@ -1,0 +1,38 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{   * @brief Interrupt Request Handler for EXTI Lines 2 and 3 (PB0 and PB1)}
+\PYGfriendly{c+cm}{   * @params None}
+\PYGfriendly{c+cm}{   * @retval None}
+\PYGfriendly{c+cm}{   */}
+  \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{EXTI0\PYGfriendlyZus{}1\PYGfriendlyZus{}IRQHandler}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Check which button generated the interrupt}
+    \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{getSW}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{c+c1}{// Check the state of the program}
+      \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{programState}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{k}{case} \PYGfriendly{n+nl}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}SW0}\PYGfriendly{p}{:}
+        \PYGfriendly{c+c1}{// If we were waiting for SW0, display the menu}
+        \PYGfriendly{n}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{DISP\PYGfriendlyZus{}MENU}\PYGfriendly{p}{,} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{);}
+
+        \PYGfriendly{c+c1}{// Change program state}
+        \PYGfriendly{n}{programState} \PYGfriendly{o}{=} \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}BUTTON}\PYGfriendly{p}{;}
+        \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+      \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+        \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+      \PYGfriendly{p}{\PYGfriendlyZcb{}}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{k}{else} \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{getSW}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{c+c1}{// Check the state of the program}
+      \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{programState}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{k}{case} \PYGfriendly{n+nl}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}BUTTON}\PYGfriendly{p}{:}
+        \PYGfriendly{c+c1}{// If we were waiting for another button:}
+        \PYGfriendly{n}{rainCounter}\PYGfriendly{o}{++}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Increment the rain counter}
+        \PYGfriendly{n}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{DISP\PYGfriendlyZus{}RAIN\PYGfriendlyZus{}BUCKET}\PYGfriendly{p}{,} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Notify the user}
+        \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+      \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+        \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+      \PYGfriendly{p}{\PYGfriendlyZcb{}}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+    \PYGfriendly{c+c1}{// Clear the interrupt pending bit}
+    \PYGfriendly{n}{EXTI}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{PR} \PYGfriendly{o}{|=} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}PR\PYGfriendlyZus{}PR0} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}PR\PYGfriendlyZus{}PR1}\PYGfriendly{p}{;}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}

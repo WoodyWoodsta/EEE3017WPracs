@@ -1,0 +1,40 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{   * @brief Kick off and grab an ADC conversion}
+\PYGfriendly{c+cm}{   * @params None}
+\PYGfriendly{c+cm}{   * @retval None}
+\PYGfriendly{c+cm}{   */}
+  \PYGfriendly{k}{static} \PYGfriendly{k+kt}{uint16\PYGfriendlyZus{}t} \PYGfriendly{n+nf}{getADC}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Start a conversion}
+    \PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CR} \PYGfriendly{o}{|=} \PYGfriendly{n}{ADC\PYGfriendlyZus{}CR\PYGfriendlyZus{}ADSTART}\PYGfriendly{p}{;}
+
+    \PYGfriendly{c+c1}{// Wait for the conversion to finish}
+    \PYGfriendly{k}{while} \PYGfriendly{p}{(}\PYGfriendly{o}{!}\PYGfriendly{p}{(}\PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ISR} \PYGfriendly{o}{\PYGfriendlyZam{}} \PYGfriendly{n}{ADC\PYGfriendlyZus{}ISR\PYGfriendlyZus{}EOC}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{k+kr}{\PYGfriendlyZus{}\PYGfriendlyZus{}asm}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}nop\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+    \PYGfriendly{c+c1}{// Return the result of the conversion}
+    \PYGfriendly{k}{return} \PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint16\PYGfriendlyZus{}t}\PYGfriendly{p}{)(}\PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{DR}\PYGfriendly{p}{);}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+  \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{   * @brief Check the \PYGfriendlyZdq{}battery voltage\PYGfriendlyZdq{} and display it}
+\PYGfriendly{c+cm}{   * @params None}
+\PYGfriendly{c+cm}{   * @retval None}
+\PYGfriendly{c+cm}{   */}
+  \PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{check\PYGfriendlyZus{}battery}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Grab the ADC value, convert to uV and then to battery voltage}
+    \PYGfriendly{k+kt}{uint16\PYGfriendlyZus{}t} \PYGfriendly{n}{adcVal} \PYGfriendly{o}{=} \PYGfriendly{n}{getADC}\PYGfriendly{p}{();}
+    \PYGfriendly{k+kt}{uint32\PYGfriendlyZus{}t} \PYGfriendly{n}{uVoltage} \PYGfriendly{o}{=} \PYGfriendly{n}{adcVal} \PYGfriendly{o}{*} \PYGfriendly{n}{ADC\PYGfriendlyZus{}GRAIN}\PYGfriendly{p}{;}
+    \PYGfriendly{n}{batVoltage} \PYGfriendly{o}{=} \PYGfriendly{l+m+mf}{7.21}\PYGfriendly{o}{*}\PYGfriendly{p}{(}\PYGfriendly{n}{uVoltage}\PYGfriendly{o}{/}\PYGfriendly{n}{ADC\PYGfriendlyZus{}MULTIPLIER}\PYGfriendly{p}{);}
+
+    \PYGfriendly{c+c1}{// Check for voltage threshold and change the LED accordingly}
+    \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{batVoltage} \PYGfriendly{o}{\PYGfriendlyZlt{}=} \PYGfriendly{n}{BAT\PYGfriendlyZus{}THRESHOLD}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{11}\PYGfriendly{p}{);}
+      \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{|=} \PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{10}\PYGfriendly{p}{);}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{k}{else} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{10}\PYGfriendly{p}{);}
+      \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{|=} \PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{11}\PYGfriendly{p}{);}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}

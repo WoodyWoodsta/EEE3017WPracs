@@ -1,0 +1,22 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{   * @brief Initialise the ADC to POT0}
+\PYGfriendly{c+cm}{   * @params None}
+\PYGfriendly{c+cm}{   * @retval None}
+\PYGfriendly{c+cm}{   */}
+  \PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}ADC}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Enable the ADC clock in the RCC}
+    \PYGfriendly{n}{RCC}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{APB2ENR} \PYGfriendly{o}{|=} \PYGfriendly{n}{RCC\PYGfriendlyZus{}APB2ENR\PYGfriendlyZus{}ADCEN}\PYGfriendly{p}{;}
+
+    \PYGfriendly{c+c1}{// Select ADC channel 5 for POT0}
+    \PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CHSELR} \PYGfriendly{o}{|=} \PYGfriendly{n}{ADC\PYGfriendlyZus{}CHSELR\PYGfriendlyZus{}CHSEL5}\PYGfriendly{p}{;}
+
+    \PYGfriendly{c+c1}{// Enable the ADC peripheral}
+    \PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CR} \PYGfriendly{o}{|=} \PYGfriendly{n}{ADC\PYGfriendlyZus{}CR\PYGfriendlyZus{}ADEN}\PYGfriendly{p}{;}
+
+    \PYGfriendly{c+c1}{// Wait for the ADC to become ready}
+    \PYGfriendly{k}{while} \PYGfriendly{p}{(}\PYGfriendly{o}{!}\PYGfriendly{p}{(}\PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ISR} \PYGfriendly{o}{\PYGfriendlyZam{}} \PYGfriendly{n}{ADC\PYGfriendlyZus{}ISR\PYGfriendlyZus{}ADRDY}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{k+kr}{\PYGfriendlyZus{}\PYGfriendlyZus{}asm}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}nop\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}

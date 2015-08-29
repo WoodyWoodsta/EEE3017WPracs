@@ -1,0 +1,446 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYGfriendly{c+c1}{// \PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}}
+
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}include \PYGfriendlyZlt{}stdio.h\PYGfriendlyZgt{}}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}include \PYGfriendlyZlt{}stdlib.h\PYGfriendlyZgt{}}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}include \PYGfriendlyZlt{}stdarg.h\PYGfriendlyZgt{}}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}include \PYGfriendlyZlt{}stm32f0xx.h\PYGfriendlyZgt{}}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}include \PYGfriendlyZdq{}math.h\PYGfriendlyZdq{}}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}include \PYGfriendlyZdq{}diag/Trace.h\PYGfriendlyZdq{}}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}include \PYGfriendlyZdq{}lcd\PYGfriendlyZus{}stm32f0.h\PYGfriendlyZdq{}}
+
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}define TRUE            1}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}define FALSE           0}
+
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}define DEBOUNCE\PYGfriendlyZus{}MS     20}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}define ADC\PYGfriendlyZus{}GRAIN       806 }\PYGfriendly{c+c1}{// ADC uV per bits}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}define ADC\PYGfriendlyZus{}MULTIPLIER  (float)1000000 }\PYGfriendly{c+c1}{// Grain multiplier}
+\PYGfriendly{c+cp}{\PYGfriendlyZsh{}define BAT\PYGfriendlyZus{}THRESHOLD   (float)14.0 }\PYGfriendly{c+c1}{// Low battery threshold}
+
+\PYGfriendly{c+c1}{// == Type Definitions}
+\PYGfriendly{k}{typedef} \PYGfriendly{k}{enum} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}INIT}\PYGfriendly{p}{,}
+  \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}SW0}\PYGfriendly{p}{,}
+  \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}BUTTON}\PYGfriendly{p}{,}
+  \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}BUCKET\PYGfriendlyZus{}TIP}
+\PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{n}{programState\PYGfriendlyZus{}t}\PYGfriendly{p}{;}
+
+\PYGfriendly{k}{typedef} \PYGfriendly{k}{enum} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{n}{DISP\PYGfriendlyZus{}RAIN\PYGfriendlyZus{}BUCKET}\PYGfriendly{p}{,}
+  \PYGfriendly{n}{DISP\PYGfriendlyZus{}RAINFALL}\PYGfriendly{p}{,}
+  \PYGfriendly{n}{DISP\PYGfriendlyZus{}BAT}\PYGfriendly{p}{,}
+  \PYGfriendly{n}{DISP\PYGfriendlyZus{}WELCOME}\PYGfriendly{p}{,}
+  \PYGfriendly{n}{DISP\PYGfriendlyZus{}MENU}
+\PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{n}{displayType\PYGfriendlyZus{}t}\PYGfriendly{p}{;}
+
+\PYGfriendly{c+c1}{// == Global Variables}
+\PYGfriendly{n}{programState\PYGfriendlyZus{}t} \PYGfriendly{n}{programState}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// To keep track of the program state throughout execution}
+\PYGfriendly{k+kt}{uint32\PYGfriendlyZus{}t} \PYGfriendly{n}{rainCounter}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Keep track of the rain [0.2mm]}
+\PYGfriendly{k+kt}{float} \PYGfriendly{n}{batVoltage}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Battery voltage from 1Hz samples}
+
+\PYGfriendly{c+c1}{// == Function Prototypes}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}ports}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{);}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}ADC}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{);}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}NVIC}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{);}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}EXTI}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{);}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}TIM14}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{);}
+
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{lcd\PYGfriendlyZus{}put2String}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n}{string1}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n}{string2}\PYGfriendly{p}{);}
+\PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{delay}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{unsigned} \PYGfriendly{k+kt}{int} \PYGfriendly{n}{microseconds}\PYGfriendly{p}{);}
+
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n+nf}{getSW}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n}{pb}\PYGfriendly{p}{);}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{check\PYGfriendlyZus{}battery}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{);}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{uint16\PYGfriendlyZus{}t} \PYGfriendly{n+nf}{getADC}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{);}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{displayType\PYGfriendlyZus{}t} \PYGfriendly{n}{displayType}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{float} \PYGfriendly{n}{data}\PYGfriendly{p}{);}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n+nf}{ConverttoBCD}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{float} \PYGfriendly{n}{number}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n}{dec}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n}{frac}\PYGfriendly{p}{);}
+
+\PYGfriendly{c+c1}{// == Program Code}
+\PYGfriendly{k+kt}{int} \PYGfriendly{n+nf}{main}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{int} \PYGfriendly{n}{argc}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{char}\PYGfriendly{o}{*} \PYGfriendly{n}{argv}\PYGfriendly{p}{[])} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{c+c1}{// Initialisations}
+  \PYGfriendly{n}{programState} \PYGfriendly{o}{=} \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}INIT}\PYGfriendly{p}{;}
+
+  \PYGfriendly{n}{init\PYGfriendlyZus{}LCD}\PYGfriendly{p}{();}
+  \PYGfriendly{n}{init\PYGfriendlyZus{}ports}\PYGfriendly{p}{();}
+  \PYGfriendly{n}{init\PYGfriendlyZus{}EXTI}\PYGfriendly{p}{();}
+  \PYGfriendly{n}{init\PYGfriendlyZus{}NVIC}\PYGfriendly{p}{();}
+  \PYGfriendly{n}{init\PYGfriendlyZus{}ADC}\PYGfriendly{p}{();}
+  \PYGfriendly{n}{init\PYGfriendlyZus{}TIM14}\PYGfriendly{p}{();}
+
+  \PYGfriendly{n}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{DISP\PYGfriendlyZus{}WELCOME}\PYGfriendly{p}{,} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{);}
+  \PYGfriendly{n}{programState} \PYGfriendly{o}{=} \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}SW0}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Infinite loop}
+  \PYGfriendly{k}{while} \PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k+kr}{\PYGfriendlyZus{}\PYGfriendlyZus{}asm}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}nop\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+c1}{// == Function Definitions}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Initialise the GPIO ports for pushbuttons, LEDs and the ADC}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}ports}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{c+c1}{// Enable the clock for ports used}
+  \PYGfriendly{n}{RCC}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{AHBENR} \PYGfriendly{o}{|=} \PYGfriendly{n}{RCC\PYGfriendlyZus{}AHBENR\PYGfriendlyZus{}GPIOBEN} \PYGfriendly{o}{|} \PYGfriendly{n}{RCC\PYGfriendlyZus{}AHBENR\PYGfriendlyZus{}GPIOAEN}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Initialise PB0 \PYGfriendlyZhy{} PB7, PB10 and PB11 for RG Led}
+  \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{MODER} \PYGfriendly{o}{|=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER0\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER1\PYGfriendlyZus{}0} \PYGfriendly{o}{|}
+                  \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER2\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER3\PYGfriendlyZus{}0} \PYGfriendly{o}{|}
+                  \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER4\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER5\PYGfriendlyZus{}0} \PYGfriendly{o}{|}
+                  \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER6\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER7\PYGfriendlyZus{}0} \PYGfriendly{o}{|}
+                  \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER10\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER11\PYGfriendlyZus{}0}\PYGfriendly{p}{;}
+  \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{n}{GPIO\PYGfriendlyZus{}ODR\PYGfriendlyZus{}10} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}ODR\PYGfriendlyZus{}11}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Make sure they are not on}
+
+  \PYGfriendly{c+c1}{// Initialise PA0, PA1, PA2 and PA3 for SW0, SW1, SW2 and SW3}
+  \PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{MODER} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER1} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER2}
+      \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER3}\PYGfriendly{p}{);}
+  \PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{PUPDR} \PYGfriendly{o}{|=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}PUPDR\PYGfriendlyZus{}PUPDR0\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}PUPDR\PYGfriendlyZus{}PUPDR1\PYGfriendlyZus{}0}
+      \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}PUPDR\PYGfriendlyZus{}PUPDR2\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}PUPDR\PYGfriendlyZus{}PUPDR3\PYGfriendlyZus{}0}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Enable pullup resistors}
+
+  \PYGfriendly{c+c1}{// Initialise PA5 for ADC1}
+  \PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{MODER} \PYGfriendly{o}{|=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER5}\PYGfriendly{p}{;}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Initialise the ADC to POT0}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}ADC}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{c+c1}{// Enable the ADC clock in the RCC}
+  \PYGfriendly{n}{RCC}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{APB2ENR} \PYGfriendly{o}{|=} \PYGfriendly{n}{RCC\PYGfriendlyZus{}APB2ENR\PYGfriendlyZus{}ADCEN}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Select ADC channel 5 for POT0}
+  \PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CHSELR} \PYGfriendly{o}{|=} \PYGfriendly{n}{ADC\PYGfriendlyZus{}CHSELR\PYGfriendlyZus{}CHSEL5}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Enable the ADC peripheral}
+  \PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CR} \PYGfriendly{o}{|=} \PYGfriendly{n}{ADC\PYGfriendlyZus{}CR\PYGfriendlyZus{}ADEN}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Wait for the ADC to become ready}
+  \PYGfriendly{k}{while} \PYGfriendly{p}{(}\PYGfriendly{o}{!}\PYGfriendly{p}{(}\PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ISR} \PYGfriendly{o}{\PYGfriendlyZam{}} \PYGfriendly{n}{ADC\PYGfriendlyZus{}ISR\PYGfriendlyZus{}ADRDY}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k+kr}{\PYGfriendlyZus{}\PYGfriendlyZus{}asm}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}nop\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Initialise the NVIC for pushbutton interrupts}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}NVIC}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{n}{NVIC\PYGfriendlyZus{}EnableIRQ}\PYGfriendly{p}{(}\PYGfriendly{n}{EXTI0\PYGfriendlyZus{}1\PYGfriendlyZus{}IRQn}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// For lines 0 and 1}
+  \PYGfriendly{n}{NVIC\PYGfriendlyZus{}EnableIRQ}\PYGfriendly{p}{(}\PYGfriendly{n}{EXTI2\PYGfriendlyZus{}3\PYGfriendlyZus{}IRQn}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// For lines 2 and 3}
+  \PYGfriendly{n}{NVIC\PYGfriendlyZus{}EnableIRQ}\PYGfriendly{p}{(}\PYGfriendly{n}{TIM14\PYGfriendlyZus{}IRQn}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// For TIM14}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Initialise the EXTI lines for pushbutton interrupts}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}EXTI}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{n}{RCC}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{APB2ENR} \PYGfriendly{o}{|=} \PYGfriendly{n}{RCC\PYGfriendlyZus{}APB2ENR\PYGfriendlyZus{}SYSCFGCOMPEN}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Enable the SYSCFG and COMP RCC clock}
+  \PYGfriendly{n}{SYSCFG}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{EXTICR}\PYGfriendly{p}{[}\PYGfriendly{l+m+mi}{1}\PYGfriendly{p}{]} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{l+m+mh}{0xFFFF}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Map PA0 and PA1 to external interrupt lines}
+
+  \PYGfriendly{n}{EXTI}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{FTSR} \PYGfriendly{o}{|=} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}FTSR\PYGfriendlyZus{}TR0} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}FTSR\PYGfriendlyZus{}TR1} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}FTSR\PYGfriendlyZus{}TR2} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}FTSR\PYGfriendlyZus{}TR3}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Configure trigger to falling edge}
+  \PYGfriendly{n}{EXTI}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{IMR} \PYGfriendly{o}{|=} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}IMR\PYGfriendlyZus{}MR0} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}IMR\PYGfriendlyZus{}MR1} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}IMR\PYGfriendlyZus{}MR2} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}IMR\PYGfriendlyZus{}MR3}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Umask the interrupts}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Initialise TIM14 for battery checking}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}TIM14}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{c+c1}{// Enable the clock for TIM14}
+  \PYGfriendly{n}{RCC}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{APB1ENR} \PYGfriendly{o}{|=} \PYGfriendly{n}{RCC\PYGfriendlyZus{}APB1ENR\PYGfriendlyZus{}TIM14EN}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Set the frequency to 1Hz}
+  \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{PSC} \PYGfriendly{o}{=} \PYGfriendly{l+m+mi}{4800}\PYGfriendly{p}{;}
+  \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ARR} \PYGfriendly{o}{=} \PYGfriendly{l+m+mi}{10000}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Enable the interrupt}
+  \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{DIER} \PYGfriendly{o}{|=} \PYGfriendly{l+m+mh}{0x1}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Enable the UIE (Update Interrupt Enable)}
+  \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CR1} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{2}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Make sure the interrupt is not disabled in the Control Register 1}
+
+  \PYGfriendly{c+c1}{// Make sure the counter is at zero}
+  \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CNT} \PYGfriendly{o}{=} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Enable the timer}
+  \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CR1} \PYGfriendly{o}{|=} \PYGfriendly{l+m+mh}{0x1}\PYGfriendly{p}{;}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Rational addition of a safe 2 line write to the LCD}
+\PYGfriendly{c+cm}{ * @params *string1: Pointer to the string to be written to line 1}
+\PYGfriendly{c+cm}{ *         *string2: Pointer to the string to be written to line 2}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{lcd\PYGfriendlyZus{}put2String}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n}{string1}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n}{string2}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{CURSOR\PYGfriendlyZus{}HOME}\PYGfriendly{p}{);}
+  \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{CLEAR}\PYGfriendly{p}{);}
+  \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{n}{string1}\PYGfriendly{p}{);}
+  \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{LINE\PYGfriendlyZus{}TWO}\PYGfriendly{p}{);}
+  \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{n}{string2}\PYGfriendly{p}{);}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Get the state of the specified switch, with debouncing of predefined length}
+\PYGfriendly{c+cm}{ * @params pb: Pushbutton number}
+\PYGfriendly{c+cm}{ * @retval True or false when pressed and not pressed rsp.}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n+nf}{getSW}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n}{pb}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n}{pbBit}\PYGfriendly{p}{;}
+
+  \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{pb}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{k}{case} \PYGfriendly{l+m+mi}{0}\PYGfriendly{o}{:}
+    \PYGfriendly{n}{pbBit} \PYGfriendly{o}{=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}IDR\PYGfriendlyZus{}0}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{k}{case} \PYGfriendly{l+m+mi}{1}\PYGfriendly{o}{:}
+    \PYGfriendly{n}{pbBit} \PYGfriendly{o}{=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}IDR\PYGfriendlyZus{}1}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{k}{case} \PYGfriendly{l+m+mi}{2}\PYGfriendly{o}{:}
+    \PYGfriendly{n}{pbBit} \PYGfriendly{o}{=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}IDR\PYGfriendlyZus{}2}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{k}{case} \PYGfriendly{l+m+mi}{3}\PYGfriendly{o}{:}
+    \PYGfriendly{n}{pbBit} \PYGfriendly{o}{=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}IDR\PYGfriendlyZus{}3}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+    \PYGfriendly{k}{return} \PYGfriendly{n}{FALSE}\PYGfriendly{p}{;}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+  \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{o}{!}\PYGfriendly{p}{(}\PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{IDR} \PYGfriendly{o}{\PYGfriendlyZam{}} \PYGfriendly{n}{pbBit}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{n}{delay}\PYGfriendly{p}{(}\PYGfriendly{n}{DEBOUNCE\PYGfriendlyZus{}MS} \PYGfriendly{o}{*} \PYGfriendly{l+m+mi}{1000}\PYGfriendly{p}{);}
+    \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{o}{!}\PYGfriendly{p}{(}\PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{IDR} \PYGfriendly{o}{\PYGfriendlyZam{}} \PYGfriendly{n}{pbBit}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{k}{return} \PYGfriendly{n}{TRUE}\PYGfriendly{p}{;}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{k}{else} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{k}{return} \PYGfriendly{n}{FALSE}\PYGfriendly{p}{;}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{k}{else} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k}{return} \PYGfriendly{n}{FALSE}\PYGfriendly{p}{;}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Kick off and grab an ADC conversion}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{uint16\PYGfriendlyZus{}t} \PYGfriendly{n+nf}{getADC}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{c+c1}{// Start a conversion}
+  \PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CR} \PYGfriendly{o}{|=} \PYGfriendly{n}{ADC\PYGfriendlyZus{}CR\PYGfriendlyZus{}ADSTART}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Wait for the conversion to finish}
+  \PYGfriendly{k}{while} \PYGfriendly{p}{(}\PYGfriendly{o}{!}\PYGfriendly{p}{(}\PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ISR} \PYGfriendly{o}{\PYGfriendlyZam{}} \PYGfriendly{n}{ADC\PYGfriendlyZus{}ISR\PYGfriendlyZus{}EOC}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k+kr}{\PYGfriendlyZus{}\PYGfriendlyZus{}asm}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}nop\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+  \PYGfriendly{c+c1}{// Return the result of the conversion}
+  \PYGfriendly{k}{return} \PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint16\PYGfriendlyZus{}t}\PYGfriendly{p}{)(}\PYGfriendly{n}{ADC1}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{DR}\PYGfriendly{p}{);}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Interrupt Request Handler for EXTI Lines 2 and 3 (PB0 and PB1)}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{EXTI0\PYGfriendlyZus{}1\PYGfriendlyZus{}IRQHandler}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{c+c1}{// Check which button generated the interrupt}
+  \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{getSW}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Check the state of the program}
+    \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{programState}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k}{case} \PYGfriendly{n+nl}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}SW0}\PYGfriendly{p}{:}
+      \PYGfriendly{c+c1}{// If we were waiting for SW0, display the menu}
+      \PYGfriendly{n}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{DISP\PYGfriendlyZus{}MENU}\PYGfriendly{p}{,} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{);}
+
+      \PYGfriendly{c+c1}{// Change program state}
+      \PYGfriendly{n}{programState} \PYGfriendly{o}{=} \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}BUTTON}\PYGfriendly{p}{;}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{k}{else} \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{getSW}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Check the state of the program}
+    \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{programState}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k}{case} \PYGfriendly{n+nl}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}BUTTON}\PYGfriendly{p}{:}
+      \PYGfriendly{c+c1}{// If we were waiting for another button:}
+      \PYGfriendly{n}{rainCounter}\PYGfriendly{o}{++}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Increment the rain counter}
+      \PYGfriendly{n}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{DISP\PYGfriendlyZus{}RAIN\PYGfriendlyZus{}BUCKET}\PYGfriendly{p}{,} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Notify the user}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+  \PYGfriendly{c+c1}{// Clear the interrupt pending bit}
+  \PYGfriendly{n}{EXTI}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{PR} \PYGfriendly{o}{|=} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}PR\PYGfriendlyZus{}PR0} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}PR\PYGfriendlyZus{}PR1}\PYGfriendly{p}{;}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Interrupt Request Handler for EXTI Lines 2 and 3 (PB2 and PB3)}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{EXTI2\PYGfriendlyZus{}3\PYGfriendlyZus{}IRQHandler}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{getSW}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{2}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{programState}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k}{case} \PYGfriendly{n+nl}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}BUTTON}\PYGfriendly{p}{:}
+      \PYGfriendly{n}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{DISP\PYGfriendlyZus{}RAINFALL}\PYGfriendly{p}{,} \PYGfriendly{n}{rainCounter}\PYGfriendly{p}{);}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{k}{else} \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{getSW}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{3}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{programState}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k}{case} \PYGfriendly{n+nl}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}WAIT\PYGfriendlyZus{}FOR\PYGfriendlyZus{}BUTTON}\PYGfriendly{p}{:}
+      \PYGfriendly{n}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{DISP\PYGfriendlyZus{}BAT}\PYGfriendly{p}{,} \PYGfriendly{n}{batVoltage}\PYGfriendly{p}{);}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{n}{EXTI}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{PR} \PYGfriendly{o}{|=} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}PR\PYGfriendlyZus{}PR2} \PYGfriendly{o}{|} \PYGfriendly{n}{EXTI\PYGfriendlyZus{}PR\PYGfriendlyZus{}PR3}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Clear the interrupt pending bit}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Interrupt Request Handler for TIM14}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{TIM14\PYGfriendlyZus{}IRQHandler}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{c+c1}{// Check the battery voltage}
+  \PYGfriendly{n}{check\PYGfriendlyZus{}battery}\PYGfriendly{p}{();}
+
+  \PYGfriendly{c+c1}{// Clear the interrupt pending bit}
+  \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{SR} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{n}{TIM\PYGfriendlyZus{}SR\PYGfriendlyZus{}UIF}\PYGfriendly{p}{;}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Check the \PYGfriendlyZdq{}battery voltage\PYGfriendlyZdq{} and display it}
+\PYGfriendly{c+cm}{ * @params None}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{check\PYGfriendlyZus{}battery}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{c+c1}{// Grab the ADC value, convert to uV and then to battery voltage}
+  \PYGfriendly{k+kt}{uint16\PYGfriendlyZus{}t} \PYGfriendly{n}{adcVal} \PYGfriendly{o}{=} \PYGfriendly{n}{getADC}\PYGfriendly{p}{();}
+  \PYGfriendly{k+kt}{uint32\PYGfriendlyZus{}t} \PYGfriendly{n}{uVoltage} \PYGfriendly{o}{=} \PYGfriendly{n}{adcVal} \PYGfriendly{o}{*} \PYGfriendly{n}{ADC\PYGfriendlyZus{}GRAIN}\PYGfriendly{p}{;}
+  \PYGfriendly{n}{batVoltage} \PYGfriendly{o}{=} \PYGfriendly{l+m+mf}{7.21}\PYGfriendly{o}{*}\PYGfriendly{p}{(}\PYGfriendly{n}{uVoltage}\PYGfriendly{o}{/}\PYGfriendly{n}{ADC\PYGfriendlyZus{}MULTIPLIER}\PYGfriendly{p}{);}
+
+  \PYGfriendly{c+c1}{// Check for voltage threshold and change the LED accordingly}
+  \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{batVoltage} \PYGfriendly{o}{\PYGfriendlyZlt{}=} \PYGfriendly{n}{BAT\PYGfriendlyZus{}THRESHOLD}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{11}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{|=} \PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{10}\PYGfriendly{p}{);}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{k}{else} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{10}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{|=} \PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{11}\PYGfriendly{p}{);}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Display the specified data on the screen}
+\PYGfriendly{c+cm}{ * @params displayType: What to display on the screen}
+\PYGfriendly{c+cm}{ *         ...: Data to display for the given type}
+\PYGfriendly{c+cm}{ * @retval None}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{displayType\PYGfriendlyZus{}t} \PYGfriendly{n}{displayType}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{float} \PYGfriendly{n}{data}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{c+c1}{// Switch on what needs to be displayed}
+  \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{displayType}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{k}{case} \PYGfriendly{n+nl}{DISP\PYGfriendlyZus{}BAT}\PYGfriendly{p}{:} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Display the battery voltage on the LCD}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{CLEAR}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{CURSOR\PYGfriendlyZus{}HOME}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}Battery:\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{LINE\PYGfriendlyZus{}TWO}\PYGfriendly{p}{);}
+
+    \PYGfriendly{c+c1}{// Generate the string with the batter voltage}
+    \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n}{string} \PYGfriendly{o}{=} \PYGfriendly{n}{ConverttoBCD}\PYGfriendly{p}{(}\PYGfriendly{n}{data}\PYGfriendly{p}{,} \PYGfriendly{l+m+mi}{2}\PYGfriendly{p}{,} \PYGfriendly{l+m+mi}{3}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{n}{string}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{} V\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+
+    \PYGfriendly{c+c1}{// De\PYGfriendlyZhy{}allocate the memory used for the battery string}
+    \PYGfriendly{n}{free}\PYGfriendly{p}{(}\PYGfriendly{n}{string}\PYGfriendly{p}{);}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{k}{case} \PYGfriendly{n+nl}{DISP\PYGfriendlyZus{}RAINFALL}\PYGfriendly{p}{:} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Display the rainfall amount on the LCD}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{CLEAR}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{CURSOR\PYGfriendlyZus{}HOME}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}Rainfall:\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{LINE\PYGfriendlyZus{}TWO}\PYGfriendly{p}{);}
+
+    \PYGfriendly{c+c1}{// Fetch and convert the rainfall to a string}
+    \PYGfriendly{k+kt}{float} \PYGfriendly{n}{rain} \PYGfriendly{o}{=} \PYGfriendly{l+m+mf}{0.2}\PYGfriendly{o}{*}\PYGfriendly{n}{data}\PYGfriendly{p}{;}
+    \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n}{string} \PYGfriendly{o}{=} \PYGfriendly{n}{ConverttoBCD}\PYGfriendly{p}{(}\PYGfriendly{n}{rain}\PYGfriendly{p}{,} \PYGfriendly{l+m+mi}{4}\PYGfriendly{p}{,} \PYGfriendly{l+m+mi}{1}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{n}{string}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{} mm\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+
+    \PYGfriendly{c+c1}{// De\PYGfriendlyZhy{}allocate the memory used for the rainfall string}
+    \PYGfriendly{n}{free}\PYGfriendly{p}{(}\PYGfriendly{n}{string}\PYGfriendly{p}{);}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{k}{case} \PYGfriendly{n+nl}{DISP\PYGfriendlyZus{}RAIN\PYGfriendlyZus{}BUCKET}\PYGfriendly{p}{:}
+    \PYGfriendly{c+c1}{// Display the bucket tip notification LCD}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}put2String}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}Rain bucket tip\PYGfriendlyZdq{}}\PYGfriendly{p}{,} \PYGfriendly{l+s}{\PYGfriendlyZdq{}\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{k}{case} \PYGfriendly{n+nl}{DISP\PYGfriendlyZus{}MENU}\PYGfriendly{p}{:}
+    \PYGfriendly{c+c1}{// Display the menu on the LCD}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}put2String}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}Weather Station\PYGfriendlyZdq{}}\PYGfriendly{p}{,} \PYGfriendly{l+s}{\PYGfriendlyZdq{}Press SW2 or SW3\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{k}{case} \PYGfriendly{n+nl}{DISP\PYGfriendlyZus{}WELCOME}\PYGfriendly{p}{:}
+    \PYGfriendly{c+c1}{// Display the welcome on the LCD}
+    \PYGfriendly{n}{lcd\PYGfriendlyZus{}put2String}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}EEE3017W Prac 6\PYGfriendlyZdq{}}\PYGfriendly{p}{,} \PYGfriendly{l+s}{\PYGfriendlyZdq{}Sean \PYGfriendlyZam{} Sean\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+    \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+\PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{ * @brief Convert the float given to a string}
+\PYGfriendly{c+cm}{ * @params rain: Rain in mm}
+\PYGfriendly{c+cm}{ *         dec: Number of digits to the left of the decimal point}
+\PYGfriendly{c+cm}{ *         frac: Number of decimal places (precision)}
+\PYGfriendly{c+cm}{ * @retval Pointer to the converted string}
+\PYGfriendly{c+cm}{ * @note String must be freed after use}
+\PYGfriendly{c+cm}{ */}
+\PYGfriendly{k}{static} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n+nf}{ConverttoBCD}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{float} \PYGfriendly{n}{number}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n}{dec}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n}{frac}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+  \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n}{string}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Pointer to the resulting string}
+  \PYGfriendly{k+kt}{uint32\PYGfriendlyZus{}t} \PYGfriendly{n}{rainDec} \PYGfriendly{o}{=} \PYGfriendly{n}{number}\PYGfriendly{o}{*}\PYGfriendly{n}{pow}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{10}\PYGfriendly{p}{,}\PYGfriendly{n}{frac}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Shift all digits to be used onto the left side of the decimal point}
+  \PYGfriendly{k+kt}{uint32\PYGfriendlyZus{}t} \PYGfriendly{n}{strLength} \PYGfriendly{o}{=} \PYGfriendly{p}{(}\PYGfriendly{n}{dec} \PYGfriendly{o}{+} \PYGfriendly{n}{frac} \PYGfriendly{o}{+} \PYGfriendly{l+m+mi}{2}\PYGfriendly{p}{)}\PYGfriendly{o}{*}\PYGfriendly{k}{sizeof}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Calculate the length of the require string given the accuracy parameters}
+  \PYGfriendly{n}{string} \PYGfriendly{o}{=} \PYGfriendly{n}{malloc}\PYGfriendly{p}{(}\PYGfriendly{n}{strLength}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Allocate space for the resulting string}
+  \PYGfriendly{n}{memset}\PYGfriendly{p}{(}\PYGfriendly{n}{string}\PYGfriendly{p}{,} \PYGfriendly{l+s+sc}{\PYGfriendlyZsq{}0\PYGfriendlyZsq{}}\PYGfriendly{p}{,} \PYGfriendly{n}{strLength}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Set all characters in the string to zeroes}
+
+  \PYGfriendly{c+c1}{// Loop through the digits in the newly formed integer number and place the digits in the string}
+  \PYGfriendly{k+kt}{int} \PYGfriendly{n}{pos} \PYGfriendly{o}{=} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{;}
+  \PYGfriendly{k+kt}{int} \PYGfriendly{n}{dig} \PYGfriendly{o}{=} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{;}
+  \PYGfriendly{k}{for} \PYGfriendly{p}{(}\PYGfriendly{n}{pos} \PYGfriendly{o}{=} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{;} \PYGfriendly{n}{pos} \PYGfriendly{o}{\PYGfriendlyZlt{}} \PYGfriendly{n}{strLength}\PYGfriendly{p}{;} \PYGfriendly{n}{pos}\PYGfriendly{o}{++}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// If we reach the end of the decimal part of the number, skip a position for placement of the decimal point}
+    \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{pos} \PYGfriendly{o}{==} \PYGfriendly{n}{dec}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{n}{pos}\PYGfriendly{o}{++}\PYGfriendly{p}{;}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+    \PYGfriendly{c+c1}{// Extract the digit from the newly formed integer number based on the position}
+    \PYGfriendly{k+kt}{uint32\PYGfriendlyZus{}t} \PYGfriendly{n}{multiplier} \PYGfriendly{o}{=} \PYGfriendly{n}{pow}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{10}\PYGfriendly{p}{,} \PYGfriendly{n}{strLength}\PYGfriendly{o}{\PYGfriendlyZhy{}}\PYGfriendly{n}{dig}\PYGfriendly{o}{\PYGfriendlyZhy{}}\PYGfriendly{l+m+mi}{3}\PYGfriendly{p}{);}
+    \PYGfriendly{k+kt}{uint32\PYGfriendlyZus{}t} \PYGfriendly{n}{digit} \PYGfriendly{o}{=} \PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint32\PYGfriendlyZus{}t}\PYGfriendly{p}{)(}\PYGfriendly{n}{rainDec}\PYGfriendly{o}{/}\PYGfriendly{n}{multiplier}\PYGfriendly{p}{);}
+    \PYGfriendly{n}{string}\PYGfriendly{p}{[}\PYGfriendly{n}{pos}\PYGfriendly{p}{]} \PYGfriendly{o}{=} \PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t}\PYGfriendly{p}{)(}\PYGfriendly{n}{digit} \PYGfriendly{o}{+} \PYGfriendly{l+m+mi}{48}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Convert the number to ASCII by adding 48 to it}
+    \PYGfriendly{n}{rainDec} \PYGfriendly{o}{\PYGfriendlyZhy{}=} \PYGfriendly{n}{digit}\PYGfriendly{o}{*}\PYGfriendly{n}{multiplier}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Subtract the extracted digit from the integer number}
+
+    \PYGfriendly{c+c1}{// Increment the digit number}
+    \PYGfriendly{n}{dig}\PYGfriendly{o}{++}\PYGfriendly{p}{;}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+  \PYGfriendly{c+c1}{// Place the decimal point and the null terminator in the correct positions}
+  \PYGfriendly{n}{string}\PYGfriendly{p}{[}\PYGfriendly{n}{dec}\PYGfriendly{p}{]} \PYGfriendly{o}{=} \PYGfriendly{l+s+sc}{\PYGfriendlyZsq{}.\PYGfriendlyZsq{}}\PYGfriendly{p}{;}
+  \PYGfriendly{n}{string}\PYGfriendly{p}{[}\PYGfriendly{n}{strLength} \PYGfriendly{o}{\PYGfriendlyZhy{}} \PYGfriendly{l+m+mi}{1}\PYGfriendly{p}{]} \PYGfriendly{o}{=} \PYGfriendly{l+s+sc}{\PYGfriendlyZsq{}\PYGfriendlyZbs{}0\PYGfriendlyZsq{}}\PYGfriendly{p}{;}
+
+  \PYGfriendly{c+c1}{// Return the pointer to the converted string}
+  \PYGfriendly{k}{return} \PYGfriendly{n}{string}\PYGfriendly{p}{;}
+\PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+
+\PYGfriendly{c+c1}{// \PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}\PYGfriendlyZhy{}}
+\end{Verbatim}
