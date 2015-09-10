@@ -1,0 +1,40 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{     * @brief Get the state of the specified switch, with debouncing of predefined length}
+\PYGfriendly{c+cm}{     * @params pb: Pushbutton number}
+\PYGfriendly{c+cm}{     * @retval True or false when pressed and not pressed rsp.}
+\PYGfriendly{c+cm}{     */}
+    \PYGfriendly{k}{static} \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n+nf}{check\PYGfriendlyZus{}pb}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n}{pb}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{n}{pbBit}\PYGfriendly{p}{;}
+
+      \PYGfriendly{c+c1}{// Check which PB needs to be checked}
+      \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{pb}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{k}{case} \PYGfriendly{l+m+mi}{0}\PYGfriendly{o}{:}
+        \PYGfriendly{n}{pbBit} \PYGfriendly{o}{=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}IDR\PYGfriendlyZus{}0}\PYGfriendly{p}{;}
+        \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+      \PYGfriendly{k}{case} \PYGfriendly{l+m+mi}{1}\PYGfriendly{o}{:}
+        \PYGfriendly{n}{pbBit} \PYGfriendly{o}{=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}IDR\PYGfriendlyZus{}1}\PYGfriendly{p}{;}
+        \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+      \PYGfriendly{k}{case} \PYGfriendly{l+m+mi}{2}\PYGfriendly{o}{:}
+        \PYGfriendly{n}{pbBit} \PYGfriendly{o}{=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}IDR\PYGfriendlyZus{}2}\PYGfriendly{p}{;}
+        \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+      \PYGfriendly{k}{case} \PYGfriendly{l+m+mi}{3}\PYGfriendly{o}{:}
+        \PYGfriendly{n}{pbBit} \PYGfriendly{o}{=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}IDR\PYGfriendlyZus{}3}\PYGfriendly{p}{;}
+        \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+      \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+        \PYGfriendly{k}{return} \PYGfriendly{n}{FALSE}\PYGfriendly{p}{;}
+      \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+      \PYGfriendly{c+c1}{// Debounce and check again \PYGfriendlyZhy{} return the result}
+      \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{o}{!}\PYGfriendly{p}{(}\PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{IDR} \PYGfriendly{o}{\PYGfriendlyZam{}} \PYGfriendly{n}{pbBit}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+        \PYGfriendly{n}{delay}\PYGfriendly{p}{(}\PYGfriendly{n}{DEBOUNCE\PYGfriendlyZus{}MS} \PYGfriendly{o}{*} \PYGfriendly{l+m+mi}{1000}\PYGfriendly{p}{);}
+        \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{o}{!}\PYGfriendly{p}{(}\PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{IDR} \PYGfriendly{o}{\PYGfriendlyZam{}} \PYGfriendly{n}{pbBit}\PYGfriendly{p}{))} \PYGfriendly{p}{\PYGfriendlyZob{}}
+          \PYGfriendly{k}{return} \PYGfriendly{n}{TRUE}\PYGfriendly{p}{;}
+        \PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{k}{else} \PYGfriendly{p}{\PYGfriendlyZob{}}
+          \PYGfriendly{k}{return} \PYGfriendly{n}{FALSE}\PYGfriendly{p}{;}
+        \PYGfriendly{p}{\PYGfriendlyZcb{}}
+      \PYGfriendly{p}{\PYGfriendlyZcb{}} \PYGfriendly{k}{else} \PYGfriendly{p}{\PYGfriendlyZob{}}
+        \PYGfriendly{k}{return} \PYGfriendly{n}{FALSE}\PYGfriendly{p}{;}
+      \PYGfriendly{p}{\PYGfriendlyZcb{}}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}

@@ -1,0 +1,28 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{     * @brief Initialise the GPIO ports for pushbuttons, LEDs and the ADC}
+\PYGfriendly{c+cm}{     * @params None}
+\PYGfriendly{c+cm}{     * @retval None}
+\PYGfriendly{c+cm}{     */}
+    \PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}ports}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{c+c1}{// Enable the clock for ports used}
+      \PYGfriendly{n}{RCC}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{AHBENR} \PYGfriendly{o}{|=} \PYGfriendly{n}{RCC\PYGfriendlyZus{}AHBENR\PYGfriendlyZus{}GPIOBEN} \PYGfriendly{o}{|} \PYGfriendly{n}{RCC\PYGfriendlyZus{}AHBENR\PYGfriendlyZus{}GPIOAEN}\PYGfriendly{p}{;}
+
+      \PYGfriendly{c+c1}{// Initialise PB0 \PYGfriendlyZhy{} PB7, PB10 and PB11 for RG Led}
+      \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{MODER} \PYGfriendly{o}{|=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER0\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER1\PYGfriendlyZus{}0} \PYGfriendly{o}{|}
+                      \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER2\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER3\PYGfriendlyZus{}0} \PYGfriendly{o}{|}
+                      \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER4\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER5\PYGfriendlyZus{}0} \PYGfriendly{o}{|}
+                      \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER6\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER7\PYGfriendlyZus{}0} \PYGfriendly{o}{|}
+                      \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER10\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER11\PYGfriendlyZus{}0}\PYGfriendly{p}{;}
+      \PYGfriendly{n}{GPIOB}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ODR} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{n}{GPIO\PYGfriendlyZus{}ODR\PYGfriendlyZus{}10} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}ODR\PYGfriendlyZus{}11}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Make sure they are not on}
+
+      \PYGfriendly{c+c1}{// Initialise PA0, PA1, PA2 and PA3 for SW0, SW1, SW2 and SW3}
+      \PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{MODER} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER1} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER2}
+          \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER3}\PYGfriendly{p}{);}
+      \PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{PUPDR} \PYGfriendly{o}{|=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}PUPDR\PYGfriendlyZus{}PUPDR0\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}PUPDR\PYGfriendlyZus{}PUPDR1\PYGfriendlyZus{}0}
+          \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}PUPDR\PYGfriendlyZus{}PUPDR2\PYGfriendlyZus{}0} \PYGfriendly{o}{|} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}PUPDR\PYGfriendlyZus{}PUPDR3\PYGfriendlyZus{}0}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Enable pullup resistors}
+
+      \PYGfriendly{c+c1}{// Initialise PA5 for ADC1}
+      \PYGfriendly{n}{GPIOA}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{MODER} \PYGfriendly{o}{|=} \PYGfriendly{n}{GPIO\PYGfriendlyZus{}MODER\PYGfriendlyZus{}MODER5}\PYGfriendly{p}{;}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}

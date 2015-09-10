@@ -1,0 +1,32 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{   * @brief Display the specified data on the screen}
+\PYGfriendly{c+cm}{   * @params displayType: What to display on the screen}
+\PYGfriendly{c+cm}{   *         value: Data to display for the given type}
+\PYGfriendly{c+cm}{   * @retval None}
+\PYGfriendly{c+cm}{   */}
+  \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{displayType\PYGfriendlyZus{}t} \PYGfriendly{n}{displayType}\PYGfriendly{p}{,} \PYGfriendly{k+kt}{uint32\PYGfriendlyZus{}t} \PYGfriendly{n}{value}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Check for what we need to display}
+    \PYGfriendly{k}{switch} \PYGfriendly{p}{(}\PYGfriendly{n}{displayType}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{k}{case} \PYGfriendly{n+nl}{TIME}\PYGfriendly{p}{:}
+      \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{programState} \PYGfriendly{o}{!=} \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}COUNTING}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+        \PYGfriendly{c+c1}{// Only clear the screen if we know that the first line is going to change}
+        \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{CLEAR}\PYGfriendly{p}{);}
+        \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}Time\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+      \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+      \PYGfriendly{c+c1}{// Convert the time to the string format and display it on the LCD}
+      \PYGfriendly{n}{lcd\PYGfriendlyZus{}command}\PYGfriendly{p}{(}\PYGfriendly{n}{LINE\PYGfriendlyZus{}TWO}\PYGfriendly{p}{);}
+      \PYGfriendly{k+kt}{uint8\PYGfriendlyZus{}t} \PYGfriendly{o}{*}\PYGfriendly{n}{string} \PYGfriendly{o}{=} \PYGfriendly{n}{time2String}\PYGfriendly{p}{(}\PYGfriendly{n}{value}\PYGfriendly{p}{);}
+      \PYGfriendly{n}{lcd\PYGfriendlyZus{}putstring}\PYGfriendly{p}{(}\PYGfriendly{n}{string}\PYGfriendly{p}{);}
+      \PYGfriendly{n}{free}\PYGfriendly{p}{(}\PYGfriendly{n}{string}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Make sure we de\PYGfriendlyZhy{}allocate the string!}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{case} \PYGfriendly{n+nl}{WELCOME}\PYGfriendly{p}{:}
+      \PYGfriendly{c+c1}{// Display the welcome message}
+      \PYGfriendly{n}{lcd\PYGfriendlyZus{}put2String}\PYGfriendly{p}{(}\PYGfriendly{l+s}{\PYGfriendlyZdq{}Stop Watch\PYGfriendlyZdq{}}\PYGfriendly{p}{,} \PYGfriendly{l+s}{\PYGfriendlyZdq{}Press SW0...\PYGfriendlyZdq{}}\PYGfriendly{p}{);}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{k}{default}\PYGfriendly{o}{:}
+      \PYGfriendly{k}{break}\PYGfriendly{p}{;}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}
