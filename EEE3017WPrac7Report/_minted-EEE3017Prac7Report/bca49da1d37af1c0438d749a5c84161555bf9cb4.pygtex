@@ -1,0 +1,22 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{   * @brief Initialise the TIM14}
+\PYGfriendly{c+cm}{   * @params None}
+\PYGfriendly{c+cm}{   * @retval None}
+\PYGfriendly{c+cm}{   */}
+  \PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}TIM14}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{c+c1}{// Enable the clock for TIM14}
+    \PYGfriendly{n}{RCC}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{APB1ENR} \PYGfriendly{o}{|=} \PYGfriendly{n}{RCC\PYGfriendlyZus{}APB1ENR\PYGfriendlyZus{}TIM14EN}\PYGfriendly{p}{;}
+
+    \PYGfriendly{c+c1}{// Set the frequency to 100Hz}
+    \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{PSC} \PYGfriendly{o}{=} \PYGfriendly{l+m+mi}{48}\PYGfriendly{p}{;}
+    \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{ARR} \PYGfriendly{o}{=} \PYGfriendly{l+m+mi}{10000}\PYGfriendly{p}{;}
+
+    \PYGfriendly{c+c1}{// Enable the interrupt}
+    \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{DIER} \PYGfriendly{o}{|=} \PYGfriendly{l+m+mh}{0x1}\PYGfriendly{p}{;} \PYGfriendly{c+c1}{// Enable the UIE (Update Interrupt Enable)}
+    \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CR1} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{2}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// Make sure the interrupt is not disabled in the Control Register 1}
+
+    \PYGfriendly{c+c1}{// Make sure the counter is at zero}
+    \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{CNT} \PYGfriendly{o}{=} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{;}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}

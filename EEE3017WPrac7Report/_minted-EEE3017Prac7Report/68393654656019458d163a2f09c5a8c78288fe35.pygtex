@@ -1,0 +1,20 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{     * @brief Interrupt Request Handler for TIM14}
+\PYGfriendly{c+cm}{     * @params None}
+\PYGfriendly{c+cm}{     * @retval None}
+\PYGfriendly{c+cm}{     */}
+    \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{TIM14\PYGfriendlyZus{}IRQHandler}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+      \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{programState} \PYGfriendly{o}{!=} \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}STOP}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+        \PYGfriendly{c+c1}{// If we are counting either in LAP mode or in COUNTING mode, increment the time}
+        \PYGfriendly{n}{timer}\PYGfriendly{o}{++}\PYGfriendly{p}{;}
+        \PYGfriendly{k}{if} \PYGfriendly{p}{(}\PYGfriendly{n}{programState} \PYGfriendly{o}{==} \PYGfriendly{n}{PROG\PYGfriendlyZus{}STATE\PYGfriendlyZus{}COUNTING}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+          \PYGfriendly{c+c1}{// If we are in COUNTING mode, display the timer on the screen}
+          \PYGfriendly{n}{display}\PYGfriendly{p}{(}\PYGfriendly{n}{TIME}\PYGfriendly{p}{,} \PYGfriendly{n}{timer}\PYGfriendly{p}{);}
+        \PYGfriendly{p}{\PYGfriendlyZcb{}}
+      \PYGfriendly{p}{\PYGfriendlyZcb{}}
+
+      \PYGfriendly{c+c1}{// Clear the interrupt pending bit}
+      \PYGfriendly{n}{TIM14}\PYGfriendly{o}{\PYGfriendlyZhy{}\PYGfriendlyZgt{}}\PYGfriendly{n}{SR} \PYGfriendly{o}{\PYGfriendlyZam{}=} \PYGfriendly{o}{\PYGfriendlyZti{}}\PYGfriendly{p}{(}\PYGfriendly{l+m+mi}{1} \PYGfriendly{o}{\PYGfriendlyZlt{}\PYGfriendlyZlt{}} \PYGfriendly{l+m+mi}{0}\PYGfriendly{p}{);}
+    \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}

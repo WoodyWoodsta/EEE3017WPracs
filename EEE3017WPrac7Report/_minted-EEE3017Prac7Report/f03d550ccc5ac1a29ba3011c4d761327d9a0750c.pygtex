@@ -1,0 +1,12 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYGfriendly{c+cm}{/*}
+\PYGfriendly{c+cm}{   * @brief Initialise the NVIC for pushbutton interrupts}
+\PYGfriendly{c+cm}{   * @params None}
+\PYGfriendly{c+cm}{   * @retval None}
+\PYGfriendly{c+cm}{   */}
+  \PYGfriendly{k}{static} \PYGfriendly{k+kt}{void} \PYGfriendly{n+nf}{init\PYGfriendlyZus{}NVIC}\PYGfriendly{p}{(}\PYGfriendly{k+kt}{void}\PYGfriendly{p}{)} \PYGfriendly{p}{\PYGfriendlyZob{}}
+    \PYGfriendly{n}{NVIC\PYGfriendlyZus{}EnableIRQ}\PYGfriendly{p}{(}\PYGfriendly{n}{EXTI0\PYGfriendlyZus{}1\PYGfriendlyZus{}IRQn}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// For lines 0 and 1}
+    \PYGfriendly{n}{NVIC\PYGfriendlyZus{}EnableIRQ}\PYGfriendly{p}{(}\PYGfriendly{n}{EXTI2\PYGfriendlyZus{}3\PYGfriendlyZus{}IRQn}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// For lines 2 and 3}
+    \PYGfriendly{n}{NVIC\PYGfriendlyZus{}EnableIRQ}\PYGfriendly{p}{(}\PYGfriendly{n}{TIM14\PYGfriendlyZus{}IRQn}\PYGfriendly{p}{);} \PYGfriendly{c+c1}{// For TIM14}
+  \PYGfriendly{p}{\PYGfriendlyZcb{}}
+\end{Verbatim}
